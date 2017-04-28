@@ -12,6 +12,10 @@
 #play_top span{ padding-left:20px;}
 #play_bottom{ width:100%; height:45px; background:#e4e4e4; position:absolute; bottom:0; font-size:12px; line-height:45px; text-align:center;}
 #play_list{ width:100%; position:absolute; top:45px; bottom:45px;}
+#play_list ul{ width:100%; height:100%; position:relative;}
+#play_list li{ position:absolute;  border-radius:2px; }
+#play_list li.noSel{ background:#ccc;}
+#play_list li.sel{ background:blue;}
 </style>
 <script src="js/jquery-2.1.3.min.js"></script>
 </head>
@@ -47,7 +51,8 @@
 	</ul>
 </div>
 <div id="play_list">
-	列表
+	<ul>
+	</ul>
 </div>
 <div id="play_bottom">
 	价值8800元HTML5课程，两周免费试听
@@ -58,6 +63,8 @@ var $infoUl = $('#play_top').find('ul');
 var topHeight = $('#play_top').height();
 var i = 0;
 var len = $infoUl.find('li').length;
+
+var $listUl = $('#play_list').find('ul');
 
 function infoScroll(){
 
@@ -79,6 +86,54 @@ function infoScroll(){
 infoScroll();
 
 
+function getWinning(){
+	
+	return $.ajax({
+		url : 'api/winning',
+		dataType : 'json'
+	});
+}
+
+function createMap(){
+
+	var len = 300;
+	var viewWidth = $(window).width();
+	var clearanceSize = 2;
+	var clearanceLen = 16;
+	var cols = 15;
+	var w = (viewWidth - clearanceLen * clearanceSize)/cols;
+	
+	for(var i=0;i<len;i++){
+		var x = i%cols;
+		var y = Math.floor(i/cols);
+		var $li = $('<li class="noSel"></li>');
+		$li.css({
+			width : w,
+			height : w,
+			left : x * w + (x+1)*clearanceSize,
+			top : y * w + (y+1)*clearanceSize
+		});
+		$listUl.append($li);
+	}
+}
+createMap();
+
+function bindMap(){
+	$listUl.delegate('.noSel','touchstart',function(){
+		
+		var This = this;
+		
+		getWinning().then(function(data){
+			if(data.code === 0){
+				console.log(data.message);
+				$(This).attr('class','sel');
+			}
+		});
+		
+	});
+}
+
+bindMap();
 </script>
 </body>
 </html>
