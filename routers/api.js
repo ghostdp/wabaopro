@@ -1,103 +1,83 @@
 // JavaScript Document
 
 var express = require('express');
-var User = require('../models/user');
 var router = express.Router();
+var Map = require('../models/map');
 
-var responseData = {};
+var luckData = [
+	{
+		goodsName : '物品1',
+		goodsChance : 0.5
+	},
+	{
+		goodsName : '物品2',
+		goodsChance : 10
+	},
+	{
+		goodsName : '物品3',
+		goodsChance : 11
+	},
+	{
+		goodsName : '物品4',
+		goodsChance : 12
+	},
+	{
+		goodsName : '物品5',
+		goodsChance : 13
+	},
+	{
+		goodsName : '物品6',
+		goodsChance : 14
+	},
+	{
+		goodsName : '物品7',
+		goodsChance : 15
+	},
+	{
+		goodsName : '物品8',
+		goodsChance : 24.5	
+	}
+];
 
-router.use(function(req,res,next){
-	responseData = {
+var wcArr = winningChance(luckData);
+
+router.get('/winning',function(req,res){  //抽奖接口
+	
+	var rm = Math.random();
+	//console.log(wcArr);
+	var wmObj = winningMessage(rm,wcArr);
+	var map_id = req.query.map_id;
+	Map.update({_id:map_id},{$set:{isChecked:true}},function(err){});			
+	res.json(wmObj);
+	
+});	
+
+function winningChance(data){
+	var result = [];
+	var num = 0;
+	for(var i=0;i<data.length;i++){
+		num = num + data[i].goodsChance;
+		result.push(num/100);
+	}
+	return result;
+}
+
+function winningMessage(rm,arr){
+	var num = 0;
+	var wmObj = {
 		code : 0,
 		message : ''
 	};
-	next();
-});
-
-router.post('/reg',function(req,res){
-	//console.log('hello reg');
-	var username = req.body.username;
-	var password = req.body.password;
-	var repassword = req.body.repassword;
-	
-	if(username == ''){
-		responseData.code = 1;
-		responseData.message = '用户名为空';
-		res.json(responseData);
-		return;
+	for(var i=0;i<arr.length;i++){
+		if(rm < arr[0]){
+			num = 0;
+		}
+		else if(rm > arr[i] && rm < arr[i+1]){
+			num = i+1;
+		}
 	}
-	
-	User.findOne({
-		
-		username : username
-		
-	}).then(function(userInfo){
-		if(userInfo){
-			console.log(111);
-		}
-		else{
-			console.log(222);
-		}
-	});
-	
-});
-
-
-router.post('/login',function(req,res,next){
-	//console.log('hello reg');
-	
-	
-	var username = req.body.username;
-	var password = req.body.password;
-	
-	if(username == ''){
-		responseData.code = 1;
-		responseData.message = '用户名为空';
-		res.json(responseData);
-		return;
-	}
-	
-	User.findOne({
-		username : username,
-		password : password
-	}).then(function(userInfo){
-		if(userInfo){
-			console.log(333);
-			//console.log(res.redirect);
-			//res.redirect('/list'); //ajax方式需要在前端跳转
-			responseData.code = 1;
-			responseData.message = '登录成功';
-			/*responseData.userInfo = {
-				_id : userInfo._id,
-				username : userInfo.username
-			};*/
-			var date = new Date();
-			date.setDate(date.getDate()+5);
-			req.cookies.set('userInfo',JSON.stringify({
-				_id : userInfo._id,
-				username : userInfo.username
-			}),{
-				expires : date
-			});
-			res.json(responseData);
-		}
-		else{
-			console.log(444);
-		}
-	});
-	
-});
-router.get('/list',function(req,res){
-	res.send(123);
-});
+	wmObj.message = luckData[num].goodsName;
+	return wmObj;
+}
 
 module.exports = router;
-
-
-
-
-
-
-
-
-

@@ -1,8 +1,9 @@
 // JavaScript Document
 
 var express = require('express');
-
 var router = express.Router();
+
+var Map = require('../models/map');
 
 router.get('/',function(req,res){
 	//res.send('1');
@@ -11,7 +12,13 @@ router.get('/',function(req,res){
 
 router.get('/gamePlay',function(req,res){
 	//res.send('2');
-	res.render('game_play',{});
+	Map.find().then(function(maps){
+		//console.log(maps);
+		res.render('game_play',{
+			maps : maps
+		});
+	});
+	
 });
 
 router.get('/gameInfo',function(req,res){

@@ -16,6 +16,12 @@
 #play_list li{ position:absolute;  border-radius:2px; }
 #play_list li.noSel{ background:#ccc;}
 #play_list li.sel{ background:blue;}
+
+#alert_container{ position:absolute; z-index:10; left:0; top:0; width:100%; height:100%; display:none;}
+#alert_modal{ width:200px; height:300px; background:white; border:1px #ccc solid; margin:auto; position:relative;}
+#alert_btn1,#alert_btn2{ width:80px; height:20px; line-height:20px; text-align:center; border-radius:2px; border:1px #ccc solid; font-size:12px; position:absolute; bottom:20px;}
+#alert_btn1{ left:10px;}
+#alert_btn2{ right:10px;}
 </style>
 <script src="js/jquery-2.1.3.min.js"></script>
 </head>
@@ -52,10 +58,26 @@
 </div>
 <div id="play_list">
 	<ul>
+		<% maps.forEach(function(map){ %>
+		
+			<% if(map.isChecked){ %>
+				<li class="sel" self_id="<%= map._id.toString() %>"></li> 
+			<% } else { %>
+				<li class="noSel" self_id="<%= map._id.toString() %>"></li>
+			<% } %>
+	    <% }) %> 
 	</ul>
 </div>
 <div id="play_bottom">
 	价值8800元HTML5课程，两周免费试听
+</div>
+
+<div id="alert_container">
+	<div id="alert_modal">
+		<p>你在“千锋大挖宝”游戏中获得“<span></span>”</p>
+		<div id="alert_btn1">再玩一次</div>
+		<div id="alert_btn2">炫耀收获</div>
+	</div>
 </div>
 <script>
 
@@ -65,6 +87,9 @@ var i = 0;
 var len = $infoUl.find('li').length;
 
 var $listUl = $('#play_list').find('ul');
+var $alertContainer = $('#alert_container');
+var $alertBtn1 = $('#alert_btn1');
+var $alertBtn2 = $('#alert_btn2');
 
 function infoScroll(){
 
@@ -86,10 +111,15 @@ function infoScroll(){
 infoScroll();
 
 
-function getWinning(){
+function getWinning(obj){
+	
+	var map_id = obj.map_id || '';
 	
 	return $.ajax({
 		url : 'api/winning',
+		data : {
+			map_id : map_id
+		},
 		dataType : 'json'
 	});
 }
@@ -116,17 +146,40 @@ function createMap(){
 		$listUl.append($li);
 	}
 }
-createMap();
+//createMap();
+
+function setMap(){
+
+	var $listLi = $listUl.find('li');
+	var viewWidth = $(window).width();
+	var clearanceSize = 2;
+	var clearanceLen = 16;
+	var cols = 15;
+	var w = (viewWidth - clearanceLen * clearanceSize)/cols;
+	
+	$listLi.each(function(i,elem){
+		var x = i%cols;
+		var y = Math.floor(i/cols);
+		$(elem).css({
+			width : w,
+			height : w,
+			left : x * w + (x+1)*clearanceSize,
+			top : y * w + (y+1)*clearanceSize
+		});
+	});
+}
+setMap();
 
 function bindMap(){
 	$listUl.delegate('.noSel','touchstart',function(){
 		
 		var This = this;
-		
-		getWinning().then(function(data){
+		var _id = $(this).attr('self_id');
+		getWinning({ map_id : _id }).then(function(data){
 			if(data.code === 0){
-				console.log(data.message);
+				//console.log(data.message);
 				$(This).attr('class','sel');
+				openAlert(data.message);
 			}
 		});
 		
@@ -134,6 +187,17 @@ function bindMap(){
 }
 
 bindMap();
+
+function openAlert(message){
+	$alertContainer.css('display','flex');
+	$alertContainer.find('span').html(message);
+}
+function bindAlert(){
+	$alertBtn1.on('touchstart',function(){
+		$alertContainer.css('display','none');
+	});
+}
+bindAlert();
 </script>
 </body>
 </html>
